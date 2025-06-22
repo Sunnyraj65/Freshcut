@@ -1,8 +1,8 @@
 import express from 'express';
-import requireAuth from '../middleware/requireAuth.js';
+import requireCustomer from '../middleware/requireCustomer.js';
 
 const router = express.Router();
-router.use(requireAuth);
+router.use(requireCustomer);
 
 // GET /orders
 router.get('/', async (req, res) => {

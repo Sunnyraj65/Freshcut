@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
+import useOrders from 'hooks/useOrders';
 
 const AccountAccessMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +14,7 @@ const AccountAccessMenu = () => {
   const menuRef = useRef(null);
   const location = useLocation();
 
-  const accountMenuItems = [
+  let accountMenuItems = [
     {
       label: 'My Profile',
       path: '/user-account-profile',
@@ -39,6 +40,12 @@ const AccountAccessMenu = () => {
       description: 'FAQ & contact us'
     }
   ];
+
+  // Hide Order History if the user has no previous orders
+  const { hasOrders } = useOrders();
+  if (!hasOrders) {
+    accountMenuItems = accountMenuItems.filter(item => item.path !== '/order-tracking-status');
+  }
 
   // Close menu when clicking outside
   useEffect(() => {

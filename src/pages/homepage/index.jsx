@@ -7,9 +7,18 @@ import HeroBanner from './components/HeroBanner';
 import CallToActionButtons from './components/CallToActionButtons';
 import HighlightsSection from './components/HighlightsSection';
 import TrustIndicators from './components/TrustIndicators';
+import useOrders from 'hooks/useOrders';
 
 const Homepage = () => {
+  const { hasOrders } = useOrders();
   const [isLoading, setIsLoading] = useState(true);
+  const quickLinks = [
+    { label: 'Order Chicken', path: '/product-selection' },
+    { label: 'Order Fish', path: '/product-selection' },
+    ...(hasOrders ? [{ label: 'Track Order', path: '/order-tracking-status' }] : []),
+    { label: 'My Account', path: '/user-account-profile' }
+  ];
+
 
   useEffect(() => {
     // Simulate loading time for better UX
@@ -89,12 +98,7 @@ const Homepage = () => {
               <div>
                 <h4 className="font-heading font-semibold text-text-primary mb-4">Quick Links</h4>
                 <ul className="space-y-2">
-                  {[
-                    { label: 'Order Chicken', path: '/product-selection' },
-                    { label: 'Order Fish', path: '/product-selection' },
-                    { label: 'Track Order', path: '/order-tracking-status' },
-                    { label: 'My Account', path: '/user-account-profile' }
-                  ].map((link) => (
+                  {quickLinks.map((link) => (
                     <li key={link.path}>
                       <Link
                         to={link.path}

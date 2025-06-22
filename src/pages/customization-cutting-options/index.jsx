@@ -68,6 +68,9 @@ const CustomizationCuttingOptions = () => {
     total: 0
   });
 
+
+
+
   // Mock cutting options data
   const cuttingOptions = [
     {

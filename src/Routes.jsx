@@ -17,6 +17,9 @@ import CustomizationCuttingOptions from "pages/customization-cutting-options";
 import ShoppingCartCheckout from "pages/shopping-cart-checkout";
 import OrderTrackingStatus from "pages/order-tracking-status";
 import UserAccountProfile from "pages/user-account-profile";
+import SignIn from "pages/auth/SignIn";
+import SignUp from "pages/auth/SignUp";
+import CustomerProtected from "components/CustomerProtected";
 
 const Routes = () => {
   return (
@@ -31,13 +34,15 @@ const Routes = () => {
           <Route path="/customization-cutting-options" element={<CustomizationCuttingOptions />} />
           <Route path="/shopping-cart-checkout" element={<ShoppingCartCheckout />} />
           <Route path="/order-tracking-status" element={<OrderTrackingStatus />} />
-          <Route path="/user-account-profile" element={<UserAccountProfile />} />
+          <Route path="/user-account-profile" element={<CustomerProtected><UserAccountProfile /></CustomerProtected>} />
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>} >
             <Route path="categories" element={<AdminCategories />} />
             <Route path="products" element={<Products />} />
           </Route>
+          <Route path="/sign-in/*" element={<SignIn />} />
+          <Route path="/sign-up/*" element={<SignUp />} />
         </RouterRoutes>
       </ErrorBoundary>
           </AuthProvider>

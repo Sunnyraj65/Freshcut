@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
+import useOrders from 'hooks/useOrders';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,7 +20,7 @@ const Header = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const navigationItems = [
+  let navigationItems = [
     {
       label: 'Shop',
       path: '/homepage',
@@ -46,6 +47,12 @@ const Header = () => {
       description: 'Manage your profile'
     }
   ];
+
+  // Hide the Orders link if the user has no previous orders
+  const { hasOrders } = useOrders();
+  if (!hasOrders) {
+    navigationItems = navigationItems.filter(item => item.path !== '/order-tracking-status');
+  }
 
   const isActivePath = (path) => {
     if (path === '/homepage') {
