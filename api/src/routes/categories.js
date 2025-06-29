@@ -1,44 +1,100 @@
 import express from 'express';
-import requireAuth from '../middleware/requireAuth.js';
+import { PrismaClient } from '@prisma/client';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
-// GET /categories (public)
+// Get all categories
 router.get('/', async (req, res) => {
-  const categories = await req.prisma.category.findMany({ orderBy: { name: 'asc' } });
-  res.json(categories);
-});
-
-// POST /categories
-router.post('/', requireAuth, async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ message: 'Name required' });
   try {
-    const category = await req.prisma.category.create({ data: { name } });
-    res.status(201).json(category);
-  } catch (e) {
-    res.status(400).json({ message: 'Duplicate name or invalid data' });
+    const categories = await prisma.category.findMany({
+      include: {
+        products: true
+      }
+    });
+    res.json(categories);
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// PUT /categories/:id
-router.put('/:id', requireAuth, async (req, res) => {
-  const { name } = req.body;
+// Get category by ID
+router.get('/:id', async (req, res) => {
   try {
-    const category = await req.prisma.category.update({ where: { id: Number(req.params.id) }, data: { name } });
+    const { id } = req.params;
+    const category = await prisma.category.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        products: true
+      }
+    });
+
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
     res.json(category);
-  } catch (e) {
-    res.status(404).json({ message: 'Category not found' });
+  } catch (error) {
+    console.error('Get category error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// DELETE /categories/:id
+// Create category (admin only)
+router.post('/', requireAuth, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+
+    const category = await prisma.category.create({
+      data: {
+        name,
+        description
+      }
+    });
+
+    res.status(201).json(category);
+  } catch (error) {
+    console.error('Create category error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update category (admin only)
+router.put('/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    const category = await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        description
+      }
+    });
+
+    res.json(category);
+  } catch (error) {
+    console.error('Update category error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete category (admin only)
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await req.prisma.category.delete({ where: { id: Number(req.params.id) } });
-    res.status(204).end();
-  } catch {
-    res.status(404).json({ message: 'Category not found' });
+    const { id } = req.params;
+
+    await prisma.category.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

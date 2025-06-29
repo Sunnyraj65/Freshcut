@@ -1,86 +1,114 @@
 import express from 'express';
-import requireAuth from '../middleware/requireAuth.js';
-import upload, { handleFiles } from '../utils/upload.js';
+import { PrismaClient } from '@prisma/client';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
-// GET /products?status=live&search=chicken
+// Get all products
 router.get('/', async (req, res) => {
   try {
-    const { status, search, categoryId } = req.query;
-    const where = {};
-    if (status) where.status = status;
-    if (categoryId) where.categoryId = Number(categoryId);
-    if (search) where.name = { contains: search, mode: 'insensitive' };
-
-    const products = await req.prisma.product.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: { category: true }
+    const products = await prisma.product.findMany({
+      include: {
+        category: true
+      }
     });
     res.json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ message: 'Failed to fetch products' });
+    console.error('Get products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Protect the following routes
-router.post('/', requireAuth, upload.array('images', 6), async (req, res) => {
+// Get product by ID
+router.get('/:id', async (req, res) => {
   try {
-    const data = JSON.parse(req.body.data);
-    const imageUrls = await handleFiles(req.files);
-
-    // Ensure numeric fields are numbers and types match Prisma schema
-    const parsedData = {
-      status: data.status || 'live',
-      ...data,
-      targetWeight: Number(data.targetWeight),
-      actualWeight: Number(data.actualWeight),
-      pricePerKg: Number(data.pricePerKg),
-      totalPrice: Number(data.totalPrice),
-      categoryId: Number(data.categoryId),
-      // Store images as JSON string for SQLite compatibility
-      images: JSON.stringify(imageUrls)
-    };
-
-    const product = await req.prisma.product.create({ data: parsedData });
-    res.status(201).json(product);
-  } catch (e) {
-    console.error(e);
-    res.status(400).json({ message: 'Invalid data' });
-  }
-});
-
-// PUT /products/:id
-router.put('/:id', requireAuth, upload.array('images', 6), async (req, res) => {
-  try {
-    const data = JSON.parse(req.body.data || '{}');
-    let imageUrls = [];
-    if (req.files?.length) imageUrls = await handleFiles(req.files);
-
-    const updateData = {
-      ...data,
-      ...(imageUrls.length && { images: JSON.stringify(imageUrls) })
-    };
-
-    const product = await req.prisma.product.update({
-      where: { id: Number(req.params.id) },
-      data: updateData
+    const { id } = req.params;
+    const product = await prisma.product.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        category: true
+      }
     });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
     res.json(product);
-  } catch (e) {
-    res.status(400).json({ message: 'Invalid data or product not found' });
+  } catch (error) {
+    console.error('Get product error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// DELETE /products/:id
+// Create product (admin only)
+router.post('/', requireAuth, async (req, res) => {
+  try {
+    const { name, description, price, categoryId, imageUrl, stock } = req.body;
+
+    const product = await prisma.product.create({
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        categoryId: parseInt(categoryId),
+        imageUrl,
+        stock: parseInt(stock)
+      },
+      include: {
+        category: true
+      }
+    });
+
+    res.status(201).json(product);
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update product (admin only)
+router.put('/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, categoryId, imageUrl, stock } = req.body;
+
+    const product = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        categoryId: parseInt(categoryId),
+        imageUrl,
+        stock: parseInt(stock)
+      },
+      include: {
+        category: true
+      }
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete product (admin only)
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await req.prisma.product.delete({ where: { id: Number(req.params.id) } });
-    res.status(204).end();
-  } catch {
-    res.status(404).json({ message: 'Product not found' });
+    const { id } = req.params;
+
+    await prisma.product.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
