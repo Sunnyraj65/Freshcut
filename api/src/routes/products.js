@@ -4,8 +4,6 @@ import upload, { handleFiles } from '../utils/upload.js';
 
 const router = express.Router();
 
-
-
 // GET /products?status=live&search=chicken
 router.get('/', async (req, res) => {
   const { status, search, categoryId } = req.query;
