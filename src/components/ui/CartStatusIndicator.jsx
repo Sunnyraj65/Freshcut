@@ -24,15 +24,8 @@ const CartStatusIndicator = () => {
           setCartData(prev => ({
             itemCount,
             totalPrice,
-            hasChanges: prev.itemCount !== itemCount
+            hasChanges: prev.itemCount !== itemCount && prev.itemCount > 0
           }));
-
-          // Reset changes indicator after animation
-          if (prev?.itemCount !== itemCount) {
-            setTimeout(() => {
-              setCartData(prev => ({ ...prev, hasChanges: false }));
-            }, 1000);
-          }
         } catch (e) {
           console.error('Error loading cart from localStorage', e);
         }
@@ -52,6 +45,16 @@ const CartStatusIndicator = () => {
     const interval = setInterval(loadCartData, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  // Reset changes indicator after animation
+  useEffect(() => {
+    if (cartData.hasChanges) {
+      const timeout = setTimeout(() => {
+        setCartData(prev => ({ ...prev, hasChanges: false }));
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [cartData.hasChanges]);
 
   if (cartData.itemCount === 0) {
     return null;

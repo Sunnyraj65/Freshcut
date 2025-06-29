@@ -6,18 +6,23 @@ const router = express.Router();
 
 // GET /products?status=live&search=chicken
 router.get('/', async (req, res) => {
-  const { status, search, categoryId } = req.query;
-  const where = {};
-  if (status) where.status = status;
-  if (categoryId) where.categoryId = Number(categoryId);
-  if (search) where.name = { contains: search, mode: 'insensitive' };
+  try {
+    const { status, search, categoryId } = req.query;
+    const where = {};
+    if (status) where.status = status;
+    if (categoryId) where.categoryId = Number(categoryId);
+    if (search) where.name = { contains: search, mode: 'insensitive' };
 
-  const products = await req.prisma.product.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    include: { category: true }
-  });
-  res.json(products);
+    const products = await req.prisma.product.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { category: true }
+    });
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Failed to fetch products' });
+  }
 });
 
 // Protect the following routes

@@ -35,6 +35,13 @@ const Products = () => {
 
   const addProduct = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!form.name || !form.targetWeight || !form.pricePerKg || !form.categoryId) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     const fd = new FormData();
     const weight = parseFloat(form.targetWeight);
     const price = parseFloat(form.pricePerKg);
@@ -44,6 +51,7 @@ const Products = () => {
       actualWeight: weight,
       pricePerKg: price,
       totalPrice: +(weight * price).toFixed(2),
+      categoryId: Number(form.categoryId),
       images: [],
     }));
     await api.post("/products", fd, { headers });
@@ -60,11 +68,44 @@ const Products = () => {
     <div className="p-6 overflow-auto">
       <h1 className="text-2xl font-semibold mb-4">Products</h1>
       <form onSubmit={addProduct} className="grid grid-cols-5 gap-3 mb-6 items-end">
-        <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="border px-3 py-2 rounded" />
-        <input name="targetWeight" value={form.targetWeight} onChange={handleChange} placeholder="Target Weight" className="border px-3 py-2 rounded" />
-        <input name="pricePerKg" value={form.pricePerKg} onChange={handleChange} placeholder="Price/kg" className="border px-3 py-2 rounded" />
-        <select name="categoryId" value={form.categoryId} onChange={handleChange} className="border px-3 py-2 rounded">
-          <option value="">Category</option>
+        <input 
+          name="name" 
+          value={form.name} 
+          onChange={handleChange} 
+          placeholder="Name" 
+          className="border px-3 py-2 rounded" 
+          required 
+        />
+        <input 
+          name="targetWeight" 
+          value={form.targetWeight} 
+          onChange={handleChange} 
+          placeholder="Target Weight" 
+          className="border px-3 py-2 rounded" 
+          type="number"
+          step="0.01"
+          min="0"
+          required 
+        />
+        <input 
+          name="pricePerKg" 
+          value={form.pricePerKg} 
+          onChange={handleChange} 
+          placeholder="Price/kg" 
+          className="border px-3 py-2 rounded" 
+          type="number"
+          step="0.01"
+          min="0"
+          required 
+        />
+        <select 
+          name="categoryId" 
+          value={form.categoryId} 
+          onChange={handleChange} 
+          className="border px-3 py-2 rounded"
+          required
+        >
+          <option value="">Select Category</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <button className="bg-green-600 text-white px-4 py-2 rounded">Add</button>
