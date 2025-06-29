@@ -96,22 +96,36 @@ const ShoppingCartCheckout = () => {
   }, [cartItems]);
 
   const handleQuantityChange = (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
+    console.log('Quantity change:', itemId, newQuantity); // Debug log
     
-    setCartItems(prevItems => 
-      prevItems.map(item => 
+    if (newQuantity < 1) {
+      // If quantity becomes 0 or less, remove the item
+      handleRemoveItem(itemId);
+      return;
+    }
+    
+    setCartItems(prevItems => {
+      const updatedItems = prevItems.map(item => 
         item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
+      );
+      console.log('Updated items:', updatedItems); // Debug log
+      return updatedItems;
+    });
   };
 
   const handleRemoveItem = (itemId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    console.log('Removing item:', itemId); // Debug log
     
-    // If cart becomes empty, clear localStorage
-    if (cartItems.length === 1) {
-      localStorage.removeItem('freshcut_cart');
-    }
+    setCartItems(prevItems => {
+      const filteredItems = prevItems.filter(item => item.id !== itemId);
+      
+      // If cart becomes empty, clear localStorage
+      if (filteredItems.length === 0) {
+        localStorage.removeItem('freshcut_cart');
+      }
+      
+      return filteredItems;
+    });
   };
 
   const handleClearCart = () => {
@@ -193,7 +207,7 @@ const ShoppingCartCheckout = () => {
             <div className="flex-1">
               <div className="flex justify-between">
                 <h3 className="font-heading font-medium text-text-primary">
-                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)} - {item.actualWeight}kg
+                  {item.type?.charAt(0).toUpperCase() + item.type?.slice(1)} - {item.actualWeight}kg
                 </h3>
                 <button 
                   onClick={() => handleRemoveItem(item.id)}
@@ -217,17 +231,29 @@ const ShoppingCartCheckout = () => {
               <div className="flex justify-between items-center mt-3">
                 <div className="flex items-center border border-border rounded-lg overflow-hidden">
                   <button
-                    onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
-                    className="flex items-center justify-center w-8 h-8 bg-surface-100 text-text-secondary hover:bg-primary hover:text-white transition-smooth touch-target"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Minus button clicked for item:', item.id, 'current quantity:', item.quantity); // Debug log
+                      handleQuantityChange(item.id, (item.quantity || 1) - 1);
+                    }}
+                    className="flex items-center justify-center w-10 h-10 bg-surface-100 text-text-secondary hover:bg-primary hover:text-white transition-smooth touch-target"
+                    type="button"
                   >
                     <Icon name="Minus" size={16} />
                   </button>
-                  <div className="w-10 h-8 flex items-center justify-center font-medium text-text-primary">
+                  <div className="w-12 h-10 flex items-center justify-center font-medium text-text-primary bg-white">
                     {item.quantity || 1}
                   </div>
                   <button
-                    onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
-                    className="flex items-center justify-center w-8 h-8 bg-surface-100 text-text-secondary hover:bg-primary hover:text-white transition-smooth touch-target"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Plus button clicked for item:', item.id, 'current quantity:', item.quantity); // Debug log
+                      handleQuantityChange(item.id, (item.quantity || 1) + 1);
+                    }}
+                    className="flex items-center justify-center w-10 h-10 bg-surface-100 text-text-secondary hover:bg-primary hover:text-white transition-smooth touch-target"
+                    type="button"
                   >
                     <Icon name="Plus" size={16} />
                   </button>
